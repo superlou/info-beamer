@@ -4,8 +4,8 @@
  * Includes from code by Michael Meeuwisse
  * https://docs.google.com/leaf?id=0B_dz2NwhjXB-NDQ0NWNjOWEtMzJiNy00ZjcwLWJjMjYtZTU2YmQzMWMzYmU0
  *
- * License: 
- * 
+ * License:
+ *
  * (C) Copyright 2010 Michael Meeuwisse
  *
  * Adapted from avcodec_sample.0.5.0.c, license unknown
@@ -78,7 +78,7 @@ static void video_free(video_t *video) {
 
 static int video_open(video_t *video, const char *filename) {
     video->finished = 0;
-    video->format = PIX_FMT_RGB24;
+    video->format = AV_PIX_FMT_RGB24;
 
     if (avformat_open_input(&video->format_context, filename, NULL, NULL) ||
             avformat_find_stream_info(video->format_context, NULL) < 0) {
@@ -115,7 +115,7 @@ static int video_open(video_t *video, const char *filename) {
     video->buffer_width = video->codec_context->width;
     video->buffer_height = video->codec_context->height;
 
-    fprintf(stderr, INFO("pixel aspect ratio: %d/%d, size: %dx%d buffer size: %dx%d\n"), 
+    fprintf(stderr, INFO("pixel aspect ratio: %d/%d, size: %dx%d buffer size: %dx%d\n"),
         video->codec_context->sample_aspect_ratio.num,
         video->codec_context->sample_aspect_ratio.den,
         video->width,
@@ -143,8 +143,8 @@ static int video_open(video_t *video, const char *filename) {
     fprintf(stderr, INFO("fps: %lf\n"), video->fps);
 
     /* Get framebuffers */
-    video->raw_frame = avcodec_alloc_frame();
-    video->scaled_frame = avcodec_alloc_frame();
+    video->raw_frame = av_frame_alloc();
+    video->scaled_frame = av_frame_alloc();
 
     if (!video->raw_frame || !video->scaled_frame) {
         fprintf(stderr, ERROR("cannot preallocate frames\n"));
@@ -153,17 +153,17 @@ static int video_open(video_t *video, const char *filename) {
 
     /* Create data buffer */
     video->buffer = av_malloc(avpicture_get_size(
-        video->format, 
-        video->buffer_width, 
+        video->format,
+        video->buffer_width,
         video->buffer_height
     ));
 
     /* Init buffers */
     avpicture_fill(
-        (AVPicture *) video->scaled_frame, 
-        video->buffer, 
-        video->format, 
-        video->buffer_width, 
+        (AVPicture *) video->scaled_frame,
+        video->buffer,
+        video->format,
+        video->buffer_width,
         video->buffer_height
     );
 
@@ -172,12 +172,12 @@ static int video_open(video_t *video, const char *filename) {
         video->buffer_width,
         video->buffer_height,
         video->codec_context->pix_fmt,
-        video->buffer_width, 
-        video->buffer_height, 
-        video->format, 
-        SWS_BICUBIC, 
-        NULL, 
-        NULL, 
+        video->buffer_width,
+        video->buffer_height,
+        video->format,
+        SWS_BICUBIC,
+        NULL,
+        NULL,
         NULL
     );
 
@@ -236,19 +236,19 @@ again:
         0,
     };
 
-    for (int i = 0; i < 4; i++) { 
+    for (int i = 0; i < 4; i++) {
         video->raw_frame->data[i] += video->raw_frame->linesize[i] * heights[i];
-        video->raw_frame->linesize[i] = -video->raw_frame->linesize[i]; 
+        video->raw_frame->linesize[i] = -video->raw_frame->linesize[i];
         // fprintf(stderr, "%d -> %d\n", video->raw_frame->linesize[i], video->scaled_frame->linesize[i]);
-    } 
+    }
 
     sws_scale(
-        video->scaler, 
-        (const uint8_t* const *)video->raw_frame->data, 
-        video->raw_frame->linesize, 
-        0, 
-        video->buffer_height, 
-        video->scaled_frame->data, 
+        video->scaler,
+        (const uint8_t* const *)video->raw_frame->data,
+        video->raw_frame->linesize,
+        0,
+        video->buffer_height,
+        video->scaled_frame->data,
         video->scaled_frame->linesize
     );
     av_free_packet(&packet);
@@ -297,7 +297,7 @@ static int video_next(lua_State *L) {
         video->height,
         GL_RGB,
         GL_UNSIGNED_BYTE,
-        video->buffer 
+        video->buffer
     );
     glGenerateMipmap(GL_TEXTURE_2D);
     glPopClientAttrib();
@@ -326,7 +326,7 @@ static int video_draw(lua_State *L) {
     glBindTexture(GL_TEXTURE_2D, video->tex);
     shader_set_gl_color(1.0, 1.0, 1.0, alpha);
 
-    glBegin(GL_QUADS); 
+    glBegin(GL_QUADS);
         glTexCoord2f(0.0, 1.0); glVertex3f(x1, y1, 0);
         glTexCoord2f(1.0, 1.0); glVertex3f(x2, y1, 0);
         glTexCoord2f(1.0, 0.0); glVertex3f(x2, y2, 0);
@@ -373,15 +373,15 @@ int video_load(lua_State *L, const char *path, const char *name) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glTexImage2D(
-        GL_TEXTURE_2D,  
+        GL_TEXTURE_2D,
         0,
-        GL_RGB, 
+        GL_RGB,
         video.width,
         video.height,
         0,
         GL_RGB,
         GL_UNSIGNED_BYTE,
-        NULL 
+        NULL
     );
 
     *push_video(L) = video;

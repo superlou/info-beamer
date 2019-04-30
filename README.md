@@ -1,3 +1,8 @@
+Updates to Compile on Linux Mint 19.1
+=====================================
+Install repository packages per [the instructions at info-beamer.com](https://info-beamer.com/doc/info-beamer#opensourceversion). Then, manually install libglew2.1_2.1.0-4_amd64.deb and libglew-dev_2.1.0-4_amd64.deb from https://launchpad.net/ubuntu/+source/glew.
+
+
 About info-beamer
 =================
 
