@@ -14,6 +14,14 @@ Documentation
 
 The complete documentation is available on [info-beamer.com](https://info-beamer.com/doc/info-beamer)
 
+Compiling
+---------
+On Linux Mint 21, install the following libraries:
+
+```
+sudo apt install lua5.1 libglew-dev libglfw3 libdevil-dev libavformat-dev libevent-dev libftgl-dev libswscale-dev libxxf86vm-dev
+```
+
 Installation
 ------------
 
