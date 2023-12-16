@@ -19,7 +19,7 @@ Compiling
 On Linux Mint 21, install the following libraries:
 
 ```
-sudo apt install lua5.1 libglew-dev libglfw3 libdevil-dev libavformat-dev libevent-dev libftgl-dev libswscale-dev libxxf86vm-dev
+sudo apt install lua5.1 libglew-dev libglfw3 libdevil-dev libavformat-dev libevent-dev libftgl-dev libswscale-dev libxxf86vm-dev libglfw3-dev sudo apt install liblua5.1-0-dev libxi-dev libxinerama-dev libxcursor-dev
 ```
 
 Installation
