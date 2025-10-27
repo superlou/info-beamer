@@ -70,7 +70,8 @@ static void video_free(video_t *video) {
         av_free(video->scaled_frame);
 
     if (video->codec_context)
-        avcodec_close(video->codec_context);
+        // avcodec_close(video->codec_context);
+        avcodec_free_context(&video->codec_context);
     if (video->format_context)
         avformat_close_input(&video->format_context);
 
@@ -105,6 +106,7 @@ static int video_open(video_t *video, const char *filename) {
     AVStream *stream = video->format_context->streams[video->stream_idx];
     // codecpar replaces codec, but isn't an AVCodecContext
     // video->codec_context = stream->codec;
+    video->codec_context = avcodec_alloc_context3(video->codec);
     avcodec_parameters_to_context(video->codec_context, stream->codecpar);
     video->codec = avcodec_find_decoder(video->codec_context->codec_id);
 
@@ -164,11 +166,12 @@ static int video_open(video_t *video, const char *filename) {
     //     video->buffer_width,
     //     video->buffer_height
     // ));
-    video->scaled_frame->format = video->format;
-    video->scaled_frame->width = video->buffer_width;
-    video->scaled_frame->height = video->buffer_height;
-    av_frame_get_buffer(video->scaled_frame, 0);
-    video->buffer = video->scaled_frame->buf;
+    video->buffer = av_malloc(av_image_get_buffer_size(
+        video->format,
+        video->buffer_width,
+        video->buffer_height,
+        1
+    ));
 
     /* Init buffers */
     // avpicture_fill(
@@ -186,7 +189,7 @@ static int video_open(video_t *video, const char *filename) {
         video->format,
         video->buffer_width,
         video->buffer_height,
-        1 // @todo Probably wrong. Should use linesizes?
+        1
     );
 
     /* Init scale & convert */
@@ -245,13 +248,13 @@ again:
 //     int complete_frame = 0;
 //     avcodec_decode_video2(video->codec_context, video->raw_frame, &complete_frame, &packet);
 //     int ret = avcodec_send_packet(video->codec_context, &packet);
-    
+
 //     if (ret < 0) {
 //         fprintf(stderr, "Error sending a packet for decoding\n");
 //     }
 
 //     while (ret >= 0) {
-//         ret 
+//         ret
 //     }
 
 //     /* Success? If not, drop packet. */
