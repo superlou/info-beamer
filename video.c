@@ -159,13 +159,7 @@ static int video_open(video_t *video, const char *filename) {
     }
 
     /* Create data buffer */
-    // Directly access avframe info
-    // https://trac.ffmpeg.org/wiki/Bump59
-    // video->buffer = av_malloc(avpicture_get_size(
-    //     video->format,
-    //     video->buffer_width,
-    //     video->buffer_height
-    // ));
+    // Directly access avframe info, https://trac.ffmpeg.org/wiki/Bump59
     video->buffer = av_malloc(av_image_get_buffer_size(
         video->format,
         video->buffer_width,
@@ -174,14 +168,6 @@ static int video_open(video_t *video, const char *filename) {
     ));
 
     /* Init buffers */
-    // avpicture_fill(
-    //     // AVPicture went away
-    //     (AVFrame *) video->scaled_frame,
-    //     video->buffer,
-    //     video->format,
-    //     video->buffer_width,
-    //     video->buffer_height
-    // );
     av_image_fill_arrays(
         video->scaled_frame->data,
         video->scaled_frame->linesize,
@@ -223,12 +209,10 @@ static int video_next_frame(video_t *video) {
     // av_init_packet deprecated: https://github.com/ksyun-kenc/liuguang/issues/20
     // avcodec_decode_video2 removed and replaced by av_send_packet and av_receive_packet
     // https://github.com/paulhoux/Cinder-FFmpeg/issues/6
-    // av_free_packet removed. Since we allocated on the stack, need to "unref"
-    // av_init_packet(&packet);
     // If video playback doesn't work, this is probably the problem.
+again:
     AVPacket *packet = av_packet_alloc();
 
-again:
     /* Can we read a frame? */
     if (av_read_frame(video->format_context, packet)) {
         fprintf(stderr, "no next frame\n");
@@ -244,33 +228,14 @@ again:
         goto again;
     }
 
-//     /* Decode it! */
-//     int complete_frame = 0;
-//     avcodec_decode_video2(video->codec_context, video->raw_frame, &complete_frame, &packet);
-//     int ret = avcodec_send_packet(video->codec_context, &packet);
-
-//     if (ret < 0) {
-//         fprintf(stderr, "Error sending a packet for decoding\n");
-//     }
-
-//     while (ret >= 0) {
-//         ret
-//     }
-
-//     /* Success? If not, drop packet. */
-//     if (!complete_frame) {
-//         fprintf(stderr, ERROR("incomplete video packet\n"));
-//         av_free_packet(&packet);
-//         goto again;
-//     }
-
+    /* Decode it! */
     int ret;
     ret = avcodec_send_packet(video->codec_context, packet);
 
     while (ret >= 0) {
         ret = avcodec_receive_frame(video->codec_context, video->raw_frame);
 
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF || ret == 0) {
             break;
         } else if (ret < 0) {
             fprintf(stderr, ERROR("incomplete video packet\n"));
